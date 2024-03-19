@@ -1,0 +1,108 @@
+{
+	"info": {
+		"name": "Kafka Connect",
+		"_postman_id": "2a1b1290-e781-c14f-59bf-8cc12e24b234",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register PostgreSQL Connector",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"simulator-connector\",\n  \"config\": {\n    \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n    \"database.hostname\": \"192.168.10.50\",\n    \"database.port\": \"5433\",\n    \"database.user\": \"STEUSER\",\n    \"database.password\": \"s1t2e3U4S5E6R!\",\n    \"database.dbname\": \"STE_DB\",\n    \"database.server.name\": \"STE_DB_SERVER\",\n    \"schema.include.list\": \"public\",\n    \"table.include.list\": \"public.content_grade\",\n    \"column.include.list\": \"public.content_grade.(id|user_id|content_id|grade)\",\n    \"message.key.columns\": \"public.content_grade:id\",\n    \"plugin.name\": \"pgoutput\",\n    \"snapshot.mode\": \"exported\",\n    \"tasks.max\": \"1\",\n    \"heartbeat.interval.ms\": \"5000\",\n    \"key.converter\": \"org.apache.kafka.connect.storage.StringConverter\",\n    \"key.converter.schemas.enable\": \"false\",\n    \"value.converter\": \"org.apache.kafka.connect.json.JsonConverter\",\n    \"value.converter.schemas.enable\": \"false\",\n    \"transforms\": \"unwrap,ExtractField\",\n    \"transforms.unwrap.type\": \"io.debezium.transforms.ExtractNewRecordState\",\n    \"transforms.ExtractField.type\": \"org.apache.kafka.connect.transforms.ExtractField$Key\",\n    \"transforms.ExtractField.field\": \"id\",\n    \"transforms.ExtractField.predicate\": \"UnknownFieldHatalariIcinPredicate\",\n    \"predicates\": \"UnknownFieldHatalariIcinPredicate\",\n    \"predicates.UnknownFieldHatalariIcinPredicate.type\": \"org.apache.kafka.connect.transforms.predicates.TopicNameMatches\",\n    \"predicates.UnknownFieldHatalariIcinPredicate.pattern\": \".*content_grade\"\n  }\n}\n"
+				},
+				"url": {
+					"raw": "localhost:8083/connectors",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Connectors",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:8083/connectors",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Connector Tasks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:8083/connectors/simulator-connector",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						"simulator-connector"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Connector",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:8083/connectors/simulator-connector",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						"simulator-connector"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  web:
+    extends:
+      file: common-services.yml
+      service: nginx-service
+    ports:
+      - "8080:80"

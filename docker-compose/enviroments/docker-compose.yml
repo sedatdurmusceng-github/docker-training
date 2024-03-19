@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PORT: 5432
+      POSTGRES_CONF_FILE: /etc/postgresql/postgresql.conf
+      POSTGRES_LANG: en_US.utf8
+      POSTGRES_VERSION: 13
+      POSTGRES_LOG_DIR: /var/log/postgres
+      POSTGRES_ARCHITECTURE: x86_64
+      POSTGRES_TIMEZONE: Europe/Istanbul
+      POSTGRES_ENCODING: UTF-8

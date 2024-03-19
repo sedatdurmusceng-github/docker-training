@@ -1,0 +1,32 @@
+{
+  "name": "simulator-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "192.168.10.50",
+    "database.port": "5433",
+    "database.user": "STEUSER",
+    "database.password": "s1t2e3U4S5E6R!",
+    "database.dbname": "STE_DB",
+    "database.server.name": "STE_DB_SERVER",
+    "schema.include.list": "public",
+    "table.include.list": "public.content_grade,public.content_grade_serious",
+    "column.include.list": "public.content_grade.(id|user_id|subject_content_id|grade),public.content_grade_serious.(id|user_id|subject_content_id|grade)",
+    "message.key.columns": "public.content_grade:id;public.content_grade_serious:id",
+    "plugin.name": "pgoutput",
+    "snapshot.mode": "exported",
+    "tasks.max": "1",
+    "heartbeat.interval.ms": "1000",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "transforms": "unwrap,ExtractField",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.ExtractField.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+    "transforms.ExtractField.field": "id",
+    "transforms.ExtractField.predicate": "UnknownFieldHatalariIcinPredicate",
+    "predicates": "UnknownFieldHatalariIcinPredicate",
+    "predicates.UnknownFieldHatalariIcinPredicate.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+    "predicates.UnknownFieldHatalariIcinPredicate.pattern": ".*content_grade|.*content_grade_serious"
+  }
+}

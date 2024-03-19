@@ -1,0 +1,218 @@
+version: '3.9'
+services:
+  proje1-db-dev:
+    container_name: proje1-db-dev-container
+    image: postgres:15.5-bullseye
+    environment:
+      POSTGRES_USER: proje1DevUser
+      POSTGRES_PASSWORD : Dev_PaSSw0rd
+      POSTGRES_DB: PROJE1_DEV
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    ports:
+      - "5435:5432"
+    volumes:
+      - ./proje1_exposed_config/postgis-custom-config.sh:/docker-entrypoint-initdb.d/postgis-custom-config.sh
+      - ./proje1_exposed_config/postgis-custom-config.sql:/docker-entrypoint-initdb.d/postgis-custom-config.sql
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.5
+
+  proje1-pgadmin-dev:
+    image: dpage/pgadmin4:4.29
+    container_name: proje1-pgadmin-dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@smartict.com.tr
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8088:80"
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.6
+
+  proje1-sonarqube-dev-01:
+    image: sonarqube:8.6.0-community
+    container_name: proje1-sonarqube-dev-01
+    tty: true
+    ports:
+      - "9000:9000"
+    environment:
+      - sonar.forceAuthentication=false
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.10
+        
+  # docker yönetimi için kullanılacak bir görsel arayüz sunar. 'admin' kullanıcısıyla veya yeni kullanıcı açılarak,
+  # yerelde ve remote'da bulunan docker servisleri üzerinde kontroller sağlanabilir.
+  proje1-container-manager-dev-01:
+    image: portainer/portainer-ce
+    container_name: proje1-container-manager-dev-01
+    restart: always
+    ports:
+      - "28000:8000"
+      - "29000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      admin-password: admin@smartict.com.tr
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.12
+
+  mail-client-dev-01:
+    container_name: mail-client-dev-01
+    image: smartictsolutions/mailclient:latest
+    ports:
+      - "7002:7002"
+    environment:
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: app.smartacademia@gmail.com
+      MAIL_PASSWORD: eqrzugtjyleunrxp
+      MAIL_PROTOCOL: smtp
+      MAIL_IS_AUTH: "true"
+      MAIL_START_TLS_ENABLE: "true"
+      MAIL_SSL_TRUST: smtp.gmail.com
+      MAIL_FROM: app.smartacademia@gmail.com
+    volumes:
+      - ./proje1_exposed_config/mail-client-config-base.yml:/config/mail-client-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.13
+
+  active-directory-dev-db:
+    container_name: active-directory-dev-db-container
+    image: postgres:15.5-bullseye
+    restart: always
+    environment:
+      POSTGRES_USER: ACTIVEDIRECTORYUSER
+      POSTGRES_PASSWORD : Prod_PassWord_06_!
+      POSTGRES_DB: ACTIVE_DIRECTORY_DB
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    ports:
+      - "5450:5432"
+    volumes:
+      - ./active_directory_db_data:/var/lib/postgresql/data
+    networks:
+     proje1-net-dev:
+        ipv4_address: 152.25.0.19
+
+  active-directory-client-dev-01:
+    depends_on:
+      - active-directory-dev-db
+    command: bash -c "while !</dev/tcp/152.25.0.19/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/active-directory-client-config.yml /active-directory.jar"
+    container_name: active-directory-client-dev-01
+    image: smartictsolutions/active-directory-client:latest
+    ports:
+      - "7003:7003"
+    volumes:
+      - ./proje1_exposed_config/active-directory-client-config-dev-base.yml:/config/active-directory-client-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.14
+
+  zookeeper-dev-01:
+    image: zookeeper:3.6.2
+    container_name: zookeeper-dev-01
+    tty: true
+    ports:
+      - "2181:2181"
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.7
+ 
+  kafka-dev-01:
+    image: wurstmeister/kafka:2.13-2.7.0
+    container_name: kafka-dev-01
+    tty: true
+    depends_on:
+      - zookeeper-dev-01
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper-dev-01:2181"
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://152.25.0.9:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.9
+        
+  # postgresql connectoru kafka-connect-init.sh ile register ediliyor. kafka-connect-init.sh ise production'da install.sh'da çağrılıyor.
+  # kafka-connect-init.sh dev ortamında manuel çalıştırılmalı.
+  kafka-connect-dev-01:
+    image: debezium/connect:1.4
+    container_name: kafka-connect-dev-01
+    ports:
+      - 8083:8083
+    depends_on:
+      - kafka-dev-01
+      - proje1-db-dev
+    environment:
+      - BOOTSTRAP_SERVERS=kafka-dev-01:9093
+      - GROUP_ID=ats_postgresql_connector_group
+      - CONFIG_STORAGE_TOPIC=ats_connect_configs
+      - OFFSET_STORAGE_TOPIC=ats_connect_offsets
+      - STATUS_STORAGE_TOPIC=ats_connect_statuses
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.11
+
+  hazelcast-dev-01: 
+    container_name: hazelcast-dev-01
+    restart: always
+    environment: 
+      HZ_NETWORK_PUBLICADDRESS: "127.0.0.1:5701"
+      HZ_NETWORK_RESTAPI_ENABLED: "true"
+      JAVA_OPTS: "-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast-config-base.yaml"
+    image: "hazelcast/hazelcast:4.0.1"
+    ports: 
+      - "5701:5701"
+    volumes:
+      - ./proje1_exposed_config/hazelcast-config-base.yaml:/opt/hazelcast/config_ext/hazelcast-config-base.yaml
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.2
+        
+  hazelcast-management-center-dev-01: 
+    container_name: hazelcast-management-center-dev-01
+    depends_on: 
+      - hazelcast-dev-01
+    environment: 
+      MC_ADMIN_PASSWORD: Dev_PaSSw0rd
+      MC_ADMIN_USER: admin
+    image: "hazelcast/management-center:4.0.3"
+    ports: 
+      - "5700:8080"
+    networks:
+      proje1-net-dev:
+        ipv4_address: 152.25.0.3
+        
+# proje1-APP -> build.gradle'da liquibase containerını 152.25.0.44 IP'si ile çalıştırıyoruz. Çalıştırırken hangi network'e bağlanacağını da belirlemek gerekiyor.
+# aşağıdaki "name" parametresi değişirse build.gradle'da da değiştirilmeli. bkz. dbMigrate ve dbDrop
+networks:
+  proje1-net-dev:
+    name: proje1-net-dev
+    ipam:
+      driver: default
+      config:
+        - subnet: 152.25.0.0/16
+          gateway: 152.25.0.1

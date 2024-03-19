@@ -1,0 +1,9 @@
+version: '3.9'
+services:
+  sum:
+    build: .
+    ports:
+      - "7000:7000"
+    environment:
+      NUM1: 5
+      NUM2: 10

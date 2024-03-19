@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  web:
+    image: nginx:latest
+    volumes:
+      - html-volume:/usr/share/nginx/html:ro  # Read-only veya Read-write olarak monte edilebilir.
+
+volumes:
+  html-volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./html
+      o: bind

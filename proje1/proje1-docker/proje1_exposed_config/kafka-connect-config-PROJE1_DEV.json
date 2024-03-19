@@ -1,0 +1,32 @@
+{
+  "name": "analysis-calculation-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "152.25.0.5",
+    "database.port": "5432",
+    "database.user": "eybisDevUser",
+    "database.password": "Dev_PaSSw0rd",
+    "database.dbname": "EYBIS_DEV",
+    "database.server.name": "EYBIS_DB_SERVER",
+    "schema.include.list": "public",
+    "table.include.list": "public.content_user_data,public.subject_content",
+    "column.include.list": "public.content_user_data.(id|key|value|content_id|course_id|subject_id|users_id),public.subject_content.(id|content_order|content_point|content_id|subject_id)",
+    "message.key.columns": "public.content_user_data:id;public.subject_content:id",
+    "plugin.name": "pgoutput",
+    "snapshot.mode": "exported",
+    "tasks.max": "1",
+    "heartbeat.interval.ms": "1000",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "transforms": "unwrap,ExtractField",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.ExtractField.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+    "transforms.ExtractField.field": "id",
+    "transforms.ExtractField.predicate": "UnknownFieldHatalariIcinPredicate",
+    "predicates": "UnknownFieldHatalariIcinPredicate",
+    "predicates.UnknownFieldHatalariIcinPredicate.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+    "predicates.UnknownFieldHatalariIcinPredicate.pattern": ".*content_user_data|.*subject_content"
+  }
+}

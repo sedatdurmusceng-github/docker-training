@@ -1,0 +1,59 @@
+'docker ps' //sadece çalışan docker container'larını listeleme
+'docker ps -a' //docker container'larını listeleme
+'docker build -t docker_image_asmi:docker_image_etiketi .' //docker image oluşturma
+'docker image ls' //docker image'larını listeleme
+'docker stop docker_container_id' //docker container'ını durdurma
+'docker pause docker_container_id' //docker container'ını duraklatma
+'docker unpause docker_container_id' //docker container'ını devam ettirme
+'docker rm docker_container_id' //docker container'ı kaldırma
+'docker rm docker_container_id -f' //çalışan docker container'ı kaldırma
+'docker rmi docker_image_asmi:docker_image_etiketi' //docker image silme
+
+'docker rm -f $(docker ps -a -q)' //tüm docker container'larını kaldırma
+'docker rmi -f $(docker images -a -q)' //tüm docker image'larını kaldırma
+'docker volume rm $(docker volume ls -q)' //tüm docker volume'lerini kaldırma
+'docker network rm $(docker network ls -q)' //tüm docker network'lerini kaldırma
+
+Not:'-d' komutu eklemez ise terminal ekranını kapatınca docker çalışan servislerde gider. Ama '-d' komutu eklersek arkaplanda container çalışmaya devam eder.
+
+'docker run -d docker_image_asmi:docker_image_etiketi' //docker container oluşturarak docker image'ını çalıştırır.Her çalıştırıldığında bir container oluşturulur. Varsayılan olarak container'a bir id verilir ve saklanır.
+'docker run -d --rm docker_image_asmi:docker_image_etiketi' //docker container oluşturarak docker image'ını çalıştırır.Her çalıştırıldığında bir container oluşturulur.'--rm' yazdığımız için container saklanmaz.
+'docker run -d --it docker_image_asmi:docker_image_etiketi ls' //docker container oluşturarak docker image'ını çalıştırır.Her çalıştırıldığında bir container oluşturulur.'--it' yazdığımız için docker image isminde sonra verdiğimiz 'ls' komutları container'ın içinde olduğu linux'ta komut olarak çalıştırır.
+'docker run -d --it docker_image_asmi:docker_image_etiketi /bin/sh' //docker container oluşturarak docker image'ını çalıştırır.Her çalıştırıldığında bir container oluşturulur.'--it' yazdığımız için docker image isminde sonra verdiğimiz '/bin/sh' komutları container'ın içinde olduğu linux'ta bir shell(terminal) bağlantısı açar ve artık istediğiniz linux işlemini yapabilirsiniz.
+'docker run -d -p 8888:80 docker_image_asmi:docker_image_etiketi' // docker container'ındaki 80 portunu dışarıya 8888 şeklinde açarak çalıştırma
+'docker run -d -P docker_image_asmi:docker_image_etiketi' //docker container'ındaki 80 portuna rastgele uygun bir port vererek çalıştırma
+'docker port docker_container_id' //docker container'ın hangi portta çalıştığını görmek
+'docker logs -f docker_container_id' //docker container'ının loglarını canlı canlı görmek
+'docker exec -it docker_container_id (ls,cd,bash(/bin/sh) vs.)' //docker container'ı sadece çalışırken dışardan komut vermek için kullanılır.Örneğin sonuna bash yazarsanız container içinde size bir shell ekranı açar. ls yazarsanız container içindeki dosyaları listeler.
+
+'docker run -d --label renk=kirmizi docker_image_asmi:docker_image_etiketi' //--label yazarak sonrasında bir yazı(renk=kirmizi) ile label atayabiliyoruz.
+'docker ps --filter "label=renk=kirmizi' //docker container'a verilen label üzerinde filtreleme yapma
+'docker ps --filter "name=docker_image_asmi' //docker container'a verilen name üzerinde filtreleme yapma
+'docker ps --filter "exited=0' //hangi container'ların başarılı bir şekilde çıkış yaptığını görmek
+'docker ps --filter "expose=80' //hangi container'ların 80 portunu kullandığını görmek
+
+'docker ps --format "{{.ID}}: {{.Command}}"' //ekran çıktısını formatlama
+'docker ps --format "table {{.ID}}: {{.Labels}}"' //id ve label bilgileri şeklinde formatlama.'"table' kullarakta gösterim kolonlarına başlıkta göstermesi sağlanır
+
+'docker inspect docker_image_asmi:docker_image_etiketi' // verilen docker container ismine ait çok detaylı bilgi almak için kullanılır.
+'docker inspect --format='{{ .Config.Cmd }}' docker_image_asmi:docker_image_etiketi' //detaylı bilgilerin içinden Config.Cmd değerini almak
+'docker inspect --format='{{json .Config.Cmd }}' docker_image_asmi:docker_image_etiketi' //detaylı bilgilerin içinden Config.Cmd değerini json olarak almak
+
+'docker run -d --mount type=bind,source=kendi_bilgisayarındaki_bir_yer,target=container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini  docker_image_asmi:docker_image_etiketi' //container içindeki bir dizin ile kendi bilgisayarındaki bir dizini eşleştirme
+'docker run -d --mount type=tmpfs,target=container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini  docker_image_asmi:docker_image_etiketi' //burda conatiner içindeki dizine koyduklarımız,container kapanınca silinir
+{
+'docker volume create volume_dizininde_olusturulacak_dizin_ismi' //Kendi bilgisayarımızda docker'ın kurulu olduğu yerde volume komutu ile bir dizin olusturuyoruz.
+'docker run -d --mount source=volume_dizininde_olusturulacak_dizin_ismi,target=container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini docker_image_asmi:docker_image_etiketi' //container içindeki bir dizin ile kendi bilgisayarında docker'ın kurulum dizininde oluşturulan bir dizini eşleştirme.yukardaki eşleştirme ile aynı ama bu şekilde docker dizininde oluşturmak daha güvenli,önerilir.
+}
+
+
+
+'docker run --name docker_container_ismi:docker_container_etiketi -d -P docker_image_asmi'
+'docker run --name docker_container_ismi:docker_container_etiketi -v kendi_bilgisayarındaki_bir_yer:container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini:ro -d docker_image_asmi' // volume dizini atama.'ro' bu dizinin read only olduğunu ifade ediyor.
+'docker run --name baska_docker_container_ismi --volumes-from docker_container_ismi -d -p 5500:80 docker_image_ismi' //docker_container_ismi olan containerın volume dosyasını baska_docker_container_ismi isimli başka bir container paylaştık. İkiside artık bu yere bakıyor.
+
+
+'docker tag docker_image_ismi:docker_image_etiketi docker_image_ismi:yeni_docker_image_etiketi' //yeni image etiketiyle var olan image'dan bir tane daha oluşturur. (docker tag from to)
+'docker export container_id > yeni_image_ismi.tar' // var olan bir containerdan yeni image oluşturup kaydetme
+'docker save -o yeni_image_ismi.tar var_olan_image_ismi' // var olan bir image'ı yeni image olarak kaydetme
+'docker load -i image_ismi.tar' // tar image dosyasını yüklemek

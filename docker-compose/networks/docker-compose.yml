@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+  web:
+    image: nginx:latest
+    networks:
+      my-network:
+        ipv4_address: 172.16.238.10
+    ports:
+      - "8080:80"
+
+  db:
+    image: postgres:latest
+    networks:
+      my-network:
+        ipv4_address: 172.16.238.11
+
+networks:
+  my-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.16.238.0/24"

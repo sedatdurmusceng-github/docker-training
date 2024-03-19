@@ -1,0 +1,398 @@
+version: '3.9'
+services:
+  proje1-db:
+    container_name: proje1-db-container
+    image: postgres:15.5-bullseye
+    restart: always
+    shm_size: '4gb'
+    environment:
+      POSTGRES_USER: PROJE1USER
+      POSTGRES_PASSWORD : e1y2b3i4s5U6S7E8R!
+      POSTGRES_DB: PROJE1_DB
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    ports:
+      - "5432:5432"
+    volumes:
+#      - ./proje1_exposed_config/postgis-custom-config.sh:/docker-entrypoint-initdb.d/postgis-custom-config.sh
+      - ./proje1_exposed_config/postgis-custom-config.sql:/docker-entrypoint-initdb.d/postgis-custom-config.sql
+      - ./proje1_db_data:/var/lib/postgresql/data
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.5
+
+  pgadmin:
+    image: dpage/pgadmin4:4.29
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@smartict.com.tr
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8088:80"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.6
+
+  proje1-app:
+    depends_on:
+      - proje1-db
+      - hazelcast-01
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/proje1-app-config.yml /proje1.jar"
+    container_name: proje1-app-container
+    image: proje1-app-image
+    restart: always
+    shm_size: '5gb'
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./proje1_exposed_config/proje1-app-config-base.yml:/config/proje1-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.2
+
+  proje1-report-app:
+    depends_on:
+      - proje1-db
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/proje1-report-app-config.yml /proje1-report.jar"
+    container_name: proje1-report-app-container
+    image: proje1-report-app-image
+    restart: always
+    shm_size: '2gb'
+    ports:
+      - "7004:7004"
+    volumes:
+      - ./proje1_exposed_config/proje1-report-app-config-base.yml:/config/proje1-report-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.3
+        
+  simsoft-simulator-adaptor-app:
+    depends_on:
+      - proje1-db
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/simsoft-simulator-adaptor-app-config.yml /simsoft-simulator-adaptor.jar"
+    container_name: simsoft-simulator-adaptor-app-container
+    image: simsoft-simulator-adaptor-app-image
+    restart: always
+    ports:
+      - "7008:7008"
+    volumes:
+      - ./proje1_exposed_config/simsoft-simulator-adaptor-app-config-base.yml:/config/simsoft-simulator-adaptor-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.8
+        
+  simsoft-serious-game-adaptor-app:
+    depends_on:
+      - proje1-db
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/simsoft-serious-game-adaptor-app-config.yml /simsoft-serious-game-adaptor.jar"
+    container_name: simsoft-serious-game-adaptor-app-container
+    image: simsoft-serious-game-adaptor-app-image
+    restart: always
+    ports:
+      - "7012:7012"
+    volumes:
+      - ./proje1_exposed_config/simsoft-serious-game-adaptor-app-config-base.yml:/config/simsoft-serious-game-adaptor-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.10
+
+  proje1-analysis-calculation-app:
+    depends_on:
+      - proje1-db
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/proje1-analysis-calculation-app-config.yml /proje1-analysis-calculation-app.jar"
+    container_name: proje1-analysis-calculation-app-container
+    image: proje1-analysis-calculation-app-image
+    restart: always
+    shm_size: '8gb'
+    ports:
+      - "7005:7005"
+    volumes:
+      - ./proje1_exposed_config/proje1-analysis-calculation-app-config-base.yml:/config/proje1-analysis-calculation-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.17
+        
+  elastic-search-adaptor-app:
+    depends_on:
+      - proje1-db
+    # veritabanının hazır olmasını bekliyoruz.
+    command: bash -c "while !</dev/tcp/152.24.0.5/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/elastic-search-adaptor-app-config.yml /elastic-search-adaptor-app.jar"
+    container_name: proje1-elastic_search_adaptor-container
+    image: elastic-search-adaptor-app-image
+    restart: always
+    shm_size: '4gb'
+    ports:
+      - "7010:7010"
+    volumes:
+      - ./proje1_exposed_config/elastic-search-adaptor-app-config-base.yml:/config/elastic-search-adaptor-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.21
+        
+  proje1-websoket-sunucu-app:
+    container_name: proje1-websoket-sunucu-app-container
+    image: proje1-websoket-sunucu-app-image
+    restart: always
+    ports:
+      - "7101:7101"
+    volumes:
+      - ./proje1_exposed_config/proje1-websoket-sunucu-app-config-base.yml:/config/proje1-websoket-sunucu-app-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.18
+        
+
+  proje1-ui:
+    container_name: proje1-ui-container
+    image: proje1-ui-image
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./proje1_exposed_assets/images/changable/:/usr/share/nginx/html/assets/images/changable/
+      - ./proje1_exposed_assets/ico/favicon.ico:/usr/share/nginx/html/favicon.ico
+    environment:
+      API_URL: http://152.24.0.2:7000/
+      API_DOMAIN: 152.24.0.2:7000
+      MULTIPLE_CHOICE_OPTION_NUMBER: 4
+      WS_URL: ws://152.24.0.18:7101/proje1-ws
+      CONTENT_FILE_API_URL: http://192.168.10.51:7001/
+      CONTENT_FILE_API_DOMAIN: 192.168.10.51:7001
+      REPORT_API_URL: http://152.24.0.3:7004/
+      REPORT_API_DOMAIN: 152.24.0.3:7004
+      JITSI_API_URL: http://localhost:8000/external_api.js
+      JITSI_API_DOMAIN: localhost:8000
+      LIVE_LESSON_LOG_TIME_SECOND: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.4  
+  
+
+  # docker yönetimi için kullanılacak bir görsel arayüz sunar. 'admin' kullanıcısıyla veya yeni kullanıcı açılarak,
+  # yerelde ve remote'da bulunan docker servisleri üzerinde kontroller sağlanabilir.
+  container-manager-01:
+    image: portainer/portainer-ce
+    container_name: container-manager-01
+    restart: always
+    ports:
+      - "18000:8000"
+      - "19000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      admin-password: admin@smartict.com.tr
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.12
+        
+  mail-client-01:
+    container_name: mail-client-01
+    image: smartictsolutions/mailclient:latest
+    ports:
+      - "7002:7002"
+    environment:
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: app.smartacademia@gmail.com
+      MAIL_PASSWORD: eqrzugtjyleunrxp
+      MAIL_PROTOCOL: smtp
+      MAIL_IS_AUTH: "true"
+      MAIL_START_TLS_ENABLE: "true"
+      MAIL_SSL_TRUST: smtp.gmail.com
+    volumes:
+      - ./proje1_exposed_config/mail-client-config-base.yml:/config/mail-client-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.13
+
+  active-directory-db:
+    container_name: active-directory-db-container
+    image: postgres:15.5-bullseye
+    restart: always
+    environment:
+      POSTGRES_USER: ACTIVEDIRECTORYUSER
+      POSTGRES_PASSWORD : Prod_PassWord_06_!
+      POSTGRES_DB: ACTIVE_DIRECTORY_DB
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    ports:
+      - "5450:5432"
+    volumes:
+      - ./active_directory_db_data:/var/lib/postgresql/data
+    networks:
+     proje1-net:
+        ipv4_address: 152.24.0.19       
+              
+  active-directory-client-01:
+    depends_on:
+      - active-directory-db
+    command: bash -c "while !</dev/tcp/152.24.0.19/5432; do sleep 5; done; java -jar -Dspring.config.location=file:/config/active-directory-client-config.yml /active-directory.jar"
+    container_name: active-directory-client-01
+    image: smartictsolutions/active-directory-client:latest
+    restart: always
+    shm_size: '1gb'
+    ports:
+      - "7003:7003"
+    volumes:
+      - ./proje1_exposed_config/active-directory-client-config-base.yml:/config/active-directory-client-config.yml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.14        
+
+  zookeeper-01:
+    image: zookeeper:3.6.2
+    container_name: zookeeper-01
+    restart: always
+    tty: true
+    ports:
+      - "2181:2181"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.7
+ 
+  kafka-01:
+    image: wurstmeister/kafka:2.13-2.7.0
+    container_name: kafka-01
+    restart: always
+    shm_size: '4gb'
+    tty: true
+    depends_on:
+      - zookeeper-01
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper-01:2181"
+      KAFKA_CREATE_TOPICS: "test:1:1"
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://152.24.0.9:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.9
+        
+  # postgresql connectoru kafka-connect-init.sh ile register ediliyor. kafka-connect-init.sh ise install.sh'da çağrılıyor.
+  kafka-connect-01:
+    image: debezium/connect:1.4
+    container_name: kafka-connect-01
+    restart: always
+    shm_size: '4gb'
+    ports:
+      - 8083:8083
+    depends_on:
+      - kafka-01
+      - proje1-db
+    environment:
+      - BOOTSTRAP_SERVERS=kafka-01:9092
+      - GROUP_ID=ats_postgresql_connector_group
+      - CONFIG_STORAGE_TOPIC=ats_connect_configs
+      - OFFSET_STORAGE_TOPIC=ats_connect_offsets
+      - STATUS_STORAGE_TOPIC=ats_connect_statuses
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.11
+
+  hazelcast-01: 
+    container_name: hazelcast-01
+    restart: always
+    environment: 
+      HZ_NETWORK_PUBLICADDRESS: "127.0.0.1:5701"
+      HZ_NETWORK_RESTAPI_ENABLED: "true"
+      JAVA_OPTS: "-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast-config-prod-base.yaml"
+    image: "hazelcast/hazelcast:4.0.1"
+    ports: 
+      - "5701:5701"
+    volumes:
+      - ./proje1_exposed_config/hazelcast-config-prod-base.yaml:/opt/hazelcast/config_ext/hazelcast-config-prod-base.yaml
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.15
+        
+  hazelcast-management-center-01:
+    container_name: hazelcast-management-center-01
+    depends_on: 
+      - hazelcast-01
+    environment: 
+      MC_ADMIN_PASSWORD: 0387d087a085ce6b341f1791f191cc3e0d909238bfc7794cd7d3ad5d7a064a94
+      MC_ADMIN_USER: admin
+    image: "hazelcast/management-center:4.0.3"
+    ports: 
+      - "5700:8080"
+    networks:
+      proje1-net:
+        ipv4_address: 152.24.0.16
+
+networks:
+  proje1-net:
+    name: proje1-net
+    ipam:
+      driver: default
+      config:
+        - subnet: 152.24.0.0/16
+          gateway: 152.24.0.1

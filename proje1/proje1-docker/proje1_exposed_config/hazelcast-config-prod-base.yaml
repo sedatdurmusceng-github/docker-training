@@ -1,0 +1,15 @@
+hazelcast:
+  cluster-name:
+    eybis-master-cluster
+  network:
+    port:
+      auto-increment: true
+      port-count: 100
+      port: 5701
+    join:
+      auto-detection:
+        enabled: true
+      multicast:
+        enabled: false
+      tcp-ip:
+        enabled: true
