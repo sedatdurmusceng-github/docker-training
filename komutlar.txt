@@ -46,8 +46,6 @@ Not:'-d' komutu eklemez ise terminal ekranını kapatınca docker çalışan ser
 'docker run -d --mount source=volume_dizininde_olusturulacak_dizin_ismi,target=container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini docker_image_asmi:docker_image_etiketi' //container içindeki bir dizin ile kendi bilgisayarında docker'ın kurulum dizininde oluşturulan bir dizini eşleştirme.yukardaki eşleştirme ile aynı ama bu şekilde docker dizininde oluşturmak daha güvenli,önerilir.
 }
 
-
-
 'docker run --name docker_container_ismi:docker_container_etiketi -d -P docker_image_asmi'
 'docker run --name docker_container_ismi:docker_container_etiketi -v kendi_bilgisayarındaki_bir_yer:container_icinde_kendi_makinende_bir_yerle_eslesecek_olan_container_ic_dizini:ro -d docker_image_asmi' // volume dizini atama.'ro' bu dizinin read only olduğunu ifade ediyor.
 'docker run --name baska_docker_container_ismi --volumes-from docker_container_ismi -d -p 5500:80 docker_image_ismi' //docker_container_ismi olan containerın volume dosyasını baska_docker_container_ismi isimli başka bir container paylaştık. İkiside artık bu yere bakıyor.
